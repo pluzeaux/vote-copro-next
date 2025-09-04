@@ -35,11 +35,10 @@ async function main() {
 
   await prisma.resolution.createMany({
     data: [
-      { title: "Approbation des comptes", description: "Approbation des comptes de l'exercice N-1" },
-      { title: "Budget prévisionnel", description: "Adoption du budget prévisionnel" },
-      { title: "Travaux toiture", description: "Travaux de réfection de la toiture" },
-      { title: "Contrat d'entretien", description: "Renouvellement du contrat d'entretien" },
-      { title: "Questions diverses", description: "Questions diverses" }
+      { title: "Syndic privé Habitat77", description: "Voir devis coût global env. 5000 euros par an" },
+      { title: "Syndic privé Cabinet Fay", description: "Voir devis coût global env. 5000 euros par an" },
+      { title: "Syndic coopératif avec intégrations des membres au conseil syndical", description: "Les quatres membres du syndic doivent faire partie du conseil syndical si le choix de syndic coopératif est choisi" },
+      { title: "Arrêt des procédures judiciaires", description: "Ces poursuites judiciaires concernent les refus de paiement de charges de la part de M. Favereaux" },
     ]
   });
 

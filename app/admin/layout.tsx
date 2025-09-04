@@ -9,7 +9,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans">
+    <div className="flex justify-center min-h-screen bg-slate-50 font-sans">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md p-6 flex flex-col">
         <h2 className="text-2xl font-bold text-blue-600 mb-8">Admin Dashboard</h2>

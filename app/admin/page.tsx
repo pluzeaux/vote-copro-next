@@ -112,7 +112,7 @@ export default function AdminPage() {
               key={`${r.resolutionId}-${r.choice}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl shadow transition hover:shadow-lg bg-[var(--card-bg)] hover:bg-[var(--card-hover)]"
+              className="p-4 rounded-2xl shadow transition hover:shadow-lg bg-[var(--card-bg)] hover:bg-[var(--card-hover)]"
             >
               <h3 className="font-semibold text-lg">Résolution {r.resolutionId}</h3>
               <p>

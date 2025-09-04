@@ -40,7 +40,7 @@ export default function Page() {
       </motion.div>
 
       {/* Instructions */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -55,7 +55,7 @@ export default function Page() {
           <li>Confirmez votre vote avant soumission finale.</li>
           <li>Vous pouvez corriger vos choix avant validation.</li>
         </ul>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }

@@ -92,16 +92,17 @@ export default function VoteForm() {
   };
 
   return (
-    <div className="space-y-68">
+    <div className="space-y-38 w-140">
       <AnimatePresence mode="wait">
         {step === "token" && (
+          <>
           <motion.div
             key="token"
             initial="hidden"
             animate="visible"
             exit="exit"
             variants={cardVariants}
-            className="max-w-lg mx-auto p-8 bg-white rounded-xl shadow-md"
+            className="max-w-lg mx-auto p-8 bg-white rounded-xl shadow-md space-y-4"
           >
             <p className="text-xl text-center text-slate-600 mb-6">
               Connectez-vous pour participer à l'Assemblée Générale.
@@ -126,6 +127,24 @@ export default function VoteForm() {
               <p className="mt-4 text-red-600 text-center">{message}</p>
             )}
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            id="instructions"
+            className="max-w-3xl mx-auto p-4 bg-white rounded-xl shadow-md space-y-4"
+          >
+            <h3 className="text-2xl font-semibold">Comment voter :</h3>
+            <ul className="list-disc list-inside text-slate-700 space-y-2">
+              <li>Entrez votre token reçu par email.</li>
+              <li>Validez vos choix pour chaque résolution.</li>
+              <li>Confirmez votre vote avant soumission finale.</li>
+              <li>Vous pouvez corriger vos choix avant validation.</li>
+            </ul>
+          </motion.div>
+          </>
         )}
 
         {step === "vote" && (
