@@ -102,7 +102,7 @@ export default function VoteForm() {
             animate="visible"
             exit="exit"
             variants={cardVariants}
-            className="max-w-lg mx-auto p-8 bg-white rounded-xl shadow-md space-y-4"
+            className="ml-0 mr-0 max-w-full mx-auto p-8 bg-white rounded-xl shadow-md space-y-4"
           >
             <p className="text-xl text-center text-slate-600 mb-6">
               Connectez-vous pour participer à l'Assemblée Générale.
