@@ -1,45 +1,68 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Owner {
-  id        Int     @id @default(autoincrement())
-  name      String
-  email     String  @unique
-  tantiemes Float
-  token     Token?
-  createdAt DateTime @default(now())
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Assembly {
+  id          Int          @id @default(autoincrement())
+  title       String
+  date        DateTime     @default(now())
+  resolutions Resolution[]
+  tokens      Token[]
+  createdAt   DateTime     @default(now())
 }
 
 model Token {
-  id      Int      @id @default(autoincrement())
-  token   String   @unique
-  usedAt  DateTime?
-  owner   Owner    @relation(fields: [ownerId], references: [id])
-  ownerId Int      @unique
-  votes   Vote[]
+  id         Int       @id @default(autoincrement())
+  token      String    @unique
+  usedAt     DateTime?
+  owner      Owner     @relation(fields: [ownerId], references: [id])
+  ownerId    Int
+  assembly   Assembly  @relation(fields: [assemblyId], references: [id])
+  assemblyId Int
+}
+
+model Owner {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  tantiemes Float
+  votes     Vote[]
+  tokens    Token[]
+  createdAt DateTime @default(now())
 }
 
 model Resolution {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
   description String?
-  createdAt   DateTime @default(now())
+  assembly    Assembly @relation(fields: [assemblyId], references: [id])
+  assemblyId  Int
+  choices     Choice[]
   votes       Vote[]
+  createdAt   DateTime @default(now())
+}
+
+model Choice {
+  id           Int        @id @default(autoincrement())
+  title        String
+  infoMarkdown String?
+  resolution   Resolution @relation(fields: [resolutionId], references: [id])
+  resolutionId Int
+  votes        Vote[]
 }
 
 model Vote {
-  id           Int       @id @default(autoincrement())
-  choice       String
-  weight       Float
-  token        Token     @relation(fields: [tokenId], references: [id])
-  tokenId      Int
+  id           Int        @id @default(autoincrement())
+  owner        Owner      @relation(fields: [ownerId], references: [id])
+  ownerId      Int
+  choice       Choice     @relation(fields: [choiceId], references: [id])
+  choiceId     Int
   resolution   Resolution @relation(fields: [resolutionId], references: [id])
   resolutionId Int
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime   @default(now())
 }

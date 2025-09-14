@@ -1,0 +1,8 @@
+schema: "./graphql/schema.graphql"
+documents: "./graphql/**/*.ts" # où tu écris tes queries/mutations
+generates:
+  ./graphql/generated.ts: # fichier généré automatiquement
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node

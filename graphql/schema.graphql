@@ -1,0 +1,47 @@
+type Owner {
+  id: Int!
+  name: String!
+  email: String!
+  tantiemes: Float!
+}
+
+type Resolution {
+  id: Int!
+  title: String!
+  description: String
+  choices: [Choice!]!
+}
+
+type Choice {
+  id: Int!
+  title: String!
+  description: String
+}
+
+type VoteResult {
+  resolutionId: Int!
+  choice: Choice!
+  totalWeight: Float!
+  votesCount: Int!
+}
+
+type Vote {
+  resolution: Resolution!
+  choice: Choice!
+}
+
+type Query {
+  resolutions: [Resolution!]!
+  adminResults: [VoteResult!]!
+  myVotes(token: String!): [Vote!]!
+}
+
+input VoteInput {
+  resolutionId: Int!
+  choiceId: Int!
+}
+
+type Mutation {
+  login(token: String!): Owner
+  vote(token: String!, votes: [VoteInput!]!): [Vote!]!
+}

@@ -1,28 +1,34 @@
-import prisma from "../lib/prisma"
-import { z } from "zod"
+import { GraphQLError } from "graphql";
+import prisma from "@/lib/prisma";
+import { z } from "zod";
 
-// Validation schémas
-const VoteInput = z.object({
+// --- Validation des inputs ---
+const ChoiceInput = z.object({
+  id: z.number().int().positive(),
+  title: z.string(),
+});
+
+const VoteInputZod = z.object({
   resolutionId: z.number().int().positive(),
-  choice: z.enum(["pour", "contre", "abstention"]),
-})
+  choiceId: z.number().int().positive(),
+});
 
-const VoteArray = z.array(VoteInput).min(1)
+const VoteArrayZod = z.array(VoteInputZod).min(1);
 
 export const resolvers = {
   Query: {
     resolutions: async () =>
-      prisma.resolution.findMany({ orderBy: { id: "asc" } }),
+      prisma.resolution.findMany({ orderBy: { id: "asc" }, include: { choices: true } }),
 
     adminResults: async (_: unknown, __: unknown, ctx: { isAdmin?: boolean }) => {
-      if (!ctx?.isAdmin) throw new Error("Not authorized")
+      if (!ctx?.isAdmin) throw new Error("Not authorized");
 
       const raw = await prisma.$queryRaw<
         {
-          resolution_id: number
-          choice: string
-          total_weight: bigint
-          votes_count: bigint
+          resolution_id: number;
+          choice: string;
+          total_weight: bigint;
+          votes_count: bigint;
         }[]
       >`
         SELECT r.id as resolution_id, v.choice, SUM(v.weight) as total_weight, COUNT(v.id) as votes_count
@@ -30,75 +36,107 @@ export const resolvers = {
         JOIN "Resolution" r ON r.id = v."resolutionId"
         GROUP BY r.id, v.choice
         ORDER BY r.id;
-      `
+      `;
 
       return raw.map((r) => ({
         resolutionId: r.resolution_id,
         choice: r.choice,
         totalWeight: Number(r.total_weight), // bigint → number
-        votesCount: Number(r.votes_count),   // bigint → number
-      }))
+        votesCount: Number(r.votes_count), // bigint → number
+      }));
     },
   },
 
   Mutation: {
-    login: async (_: unknown, args: { token: string }) => {
-      const tokenSchema = z.string().uuid()
-      tokenSchema.parse(args.token)
-
-      const t = await prisma.token.findUnique({
+    login: async (_: unknown, args: { token: string }, ctx) => {
+      // ctx est bien typé : ctx.prisma + ctx.isAdmin
+      const token = await ctx.prisma.token.findUnique({
         where: { token: args.token },
-        include: { owner: true },
-      })
-      if (!t) throw new Error("Token invalide")
-      if (t.usedAt) throw new Error("Token déjà utilisé")
+        include: { owner: true, assembly: true },
+      });
 
-      return { tokenId: t.id, weight: t.owner.tantiemes }
+      if (!token) {
+        throw new GraphQLError("Token invalide", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      if (token.usedAt) {
+        throw new GraphQLError("Token déjà utilisé", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const lastAssembly = await ctx.prisma.assembly.findFirst({
+        orderBy: { date: "desc" },
+      });
+
+      if (!lastAssembly || token.assemblyId !== lastAssembly.id) {
+        throw new Error("Assemblée non créée");
+      }
+
+      return token.owner;
     },
 
-    vote: async (_: unknown, args: { token: string; votes: unknown }) => {
-      // validate token and votes payload
-      const tokenSchema = z.string().uuid()
-      tokenSchema.parse(args.token)
-      const parsedVotes = VoteArray.parse(args.votes)
+    vote: async (
+      _: unknown,
+      args: { token: string; votes: { resolutionId: number; choiceId: number }[] }
+    ) => {
+      const { token, votes } = args;
 
-      return await prisma.$transaction(async (tx) => {
-        const t = await tx.token.findUnique({
-          where: { token: args.token },
-          include: { owner: true },
-        })
-        if (!t) throw new Error("Token invalide")
-        if (t.usedAt) throw new Error("Token déjà utilisé")
+      // Vérif du token
+      const tokenRecord = await prisma.token.findUnique({
+        where: { token },
+        include: { owner: true },
+      });
 
-        // Vérifie que toutes les résolutions existent avant de créer les votes
-        const resolutions = await tx.resolution.findMany({
-          where: { id: { in: parsedVotes.map((v) => v.resolutionId) } },
-        })
-        const existingIds = new Set(resolutions.map((r) => r.id))
-        for (const v of parsedVotes) {
-          if (!existingIds.has(v.resolutionId)) {
-            throw new Error(`Resolution ${v.resolutionId} inconnue`)
-          }
+      if (!tokenRecord) {
+        throw new GraphQLError("Token invalide", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      if (tokenRecord.usedAt) {
+        throw new GraphQLError("Token déjà utilisé", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      // Vérif résolutions/choices
+      for (const v of votes) {
+        const choice = await prisma.choice.findUnique({
+          where: { id: v.choiceId },
+          include: { resolution: true },
+        });
+        if (!choice || choice.resolutionId !== v.resolutionId) {
+          throw new Error("Choix ou résolution invalide");
         }
+      }
 
-        // Enregistre les votes
-        await tx.vote.createMany({
-          data: parsedVotes.map((v) => ({
-            choice: v.choice,
-            weight: t.owner.tantiemes,
-            tokenId: t.id,
-            resolutionId: v.resolutionId,
-          })),
-        })
+      // Création des votes
+      const createdVotes = await Promise.all(
+        votes.map((v) =>
+          prisma.vote.create({
+            data: {
+              resolutionId: v.resolutionId,
+              choiceId: v.choiceId,
+              ownerId: tokenRecord.owner.id,
+            },
+            include: {
+              resolution: true,
+              choice: true,
+            },
+          })
+        )
+      );
 
-        // Marque le token comme utilisé
-        await tx.token.update({
-          where: { id: t.id },
-          data: { usedAt: new Date() },
-        })
+      // Marquer le token comme utilisé
+      await prisma.token.update({
+        where: { id: tokenRecord.id },
+        data: { usedAt: new Date() },
+      });
 
-        return true
-      })
+      return createdVotes;
     },
   },
-}
+};

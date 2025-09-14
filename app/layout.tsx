@@ -19,11 +19,9 @@ export const metadata: Metadata = {
   description: "Vote en ligne copropriété",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} font-sans bg-gradient-to-b from-slate-50 to-slate-100 antialiased`}
       >

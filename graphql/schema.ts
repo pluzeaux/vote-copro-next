@@ -1,14 +1,14 @@
-import { createSchema } from "graphql-yoga"
-import { resolvers } from "./resolvers"
+import { createSchema } from "graphql-yoga";
+import { resolvers } from "./resolvers";
+import { PrismaClient } from "@prisma/client";
 
-export const schema = createSchema<{ isAdmin: boolean }>({
+export interface GraphQLContext {
+  isAdmin: boolean;
+  prisma: PrismaClient;
+}
+
+export const schema = createSchema<GraphQLContext>({
   typeDefs: `
-    enum Choice {
-      pour
-      contre
-      abstention
-    }
-
     type Owner {
       id: Int!
       name: String!
@@ -16,12 +16,14 @@ export const schema = createSchema<{ isAdmin: boolean }>({
       tantiemes: Float!
     }
 
-    type TokenInfo {
-      tokenId: Int!
-      weight: Float!
+    type Resolution {
+      id: Int!
+      title: String!
+      description: String
+      choices: [Choice!]!
     }
 
-    type Resolution {
+    type Choice {
       id: Int!
       title: String!
       description: String
@@ -35,7 +37,7 @@ export const schema = createSchema<{ isAdmin: boolean }>({
     }
 
     type Vote {
-      resolutionId: Int!
+      resolution: Resolution!
       choice: Choice!
     }
 
@@ -47,13 +49,13 @@ export const schema = createSchema<{ isAdmin: boolean }>({
 
     input VoteInput {
       resolutionId: Int!
-      choice: Choice!
+      choiceId: Int!
     }
 
     type Mutation {
-      login(token: String!): TokenInfo
-      vote(token: String!, votes: [VoteInput!]!): Boolean
+      login(token: String!): Owner
+      vote(token: String!, votes: [VoteInput!]!): [Vote!]!
     }
   `,
   resolvers,
-})
+});
