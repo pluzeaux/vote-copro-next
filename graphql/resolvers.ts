@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { sendMail } from "@/lib/mailer";
 
 // --- Validation des inputs ---
 const ChoiceInput = z.object({
@@ -87,7 +88,10 @@ export const resolvers = {
       // Vérif du token
       const tokenRecord = await prisma.token.findUnique({
         where: { token },
-        include: { owner: true },
+        include: {
+          owner: true,
+          assembly: true,
+        },
       });
 
       if (!tokenRecord) {
@@ -135,6 +139,13 @@ export const resolvers = {
         where: { id: tokenRecord.id },
         data: { usedAt: new Date() },
       });
+
+      // 📧 Envoi du mail ICI, côté backend
+      try {
+        await sendMail(tokenRecord.owner.email, tokenRecord.assembly.title, createdVotes);
+      } catch (err) {
+        console.error("Erreur lors de l’envoi du mail :", err);
+      }
 
       return createdVotes;
     },

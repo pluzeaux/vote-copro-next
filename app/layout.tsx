@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "../styles/globals.css";
 import Navbar from "@/components/Navbar";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body
         className={`${geistSans.variable} font-sans bg-gradient-to-b from-slate-50 to-slate-100 antialiased`}
       >
+        <ScrollToTop />
         <Navbar />
         <main className="min-h-screen flex justify-center w-full">
           <div>{children}</div>

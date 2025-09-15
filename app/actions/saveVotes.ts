@@ -10,13 +10,27 @@ export async function saveVotesAction(
   assemblyId: number,
   choices: Record<number, number> // { resolutionId: choiceId }
 ) {
+  // Check assembly
+  const assembly = await prisma.assembly.findUnique({
+    where: { id: assemblyId },
+  });
+
+  // 1. Vérifie owner
+  const owner = await prisma.owner.findUnique({
+    where: { id: ownerId },
+  });
+
+  if (!owner) {
+    throw new Error("Owner introuvable");
+  }
+
   // 1. Préparer la mutation
   const votes = Object.entries(choices).map(([resolutionId, choiceId]) => ({
     resolutionId: Number(resolutionId),
     choiceId: Number(choiceId),
   }));
 
-  const mutation = print(VoteDocument); // ou écrire la mutation inline si tu n’as pas de gql codegen
+  const mutation = print(VoteDocument);
 
   // 2. Appeler l’API GraphQL
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/graphql`, {
@@ -38,14 +52,15 @@ export async function saveVotesAction(
   }
 
   const createdVotes = json.data.vote;
+  // console.log("createdVotes: ", createdVotes);
 
-  // 3. Essayer l’envoi de mail (non bloquant)
-  try {
-    //  await sendMail(token, assemblyId, createdVotes);
-  } catch (err) {
-    console.error("Erreur lors de l’envoi du mail :", err);
-    // mais on n’interrompt pas le retour
-  }
+  // // 3. Essayer l’envoi de mail (non bloquant)
+  // try {
+  //   await sendMail(owner.email, assembly.title, createdVotes);
+  // } catch (err) {
+  //   console.error("Erreur lors de l’envoi du mail :", err);
+  //   // mais on n’interrompt pas le retour
+  // }
 
   // 4. Retourner les votes créés
   return createdVotes;

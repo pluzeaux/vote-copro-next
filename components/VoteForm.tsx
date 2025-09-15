@@ -317,6 +317,7 @@ export default function VoteForm() {
         >
           <h1 className="text-xl font-bold">Merci pour votre participation</h1>
           <p>Vos votes ont été enregistrés avec succès.</p>
+          <p>Un mail de confirmation de vos votes vous à été envoyé</p>
         </motion.div>
       )}
     </AnimatePresence>
